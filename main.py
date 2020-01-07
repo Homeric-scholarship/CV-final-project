@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 import cv2
 import time
+from scipy import signal
 from util import writePFM
 
 DEBUG = False
