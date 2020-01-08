@@ -5,11 +5,11 @@ import sys
 import os
 from util import readPFM, writePFM, cal_avgerr
 
-test = 1 # 0: Synthetic 1:Real
-if test == 0:
+#0: Synthetic 1:Real
+if sys.argv[1] == "Synthetic":
     tic = time.time()
     N = 10
-    imgae_dir = './data/Synthetic'
+    imgae_dir = './data/Synthetic/'
     output_dir = './output/Synthetic/'
     for i in range(N):
         print("loading image %d/10" % i)
@@ -22,10 +22,10 @@ if test == 0:
 
     toc = time.time()
     print('All time: %f sec.' % (toc - tic))
-elif test == 1:
+elif sys.argv[1] == "Real":
     tic = time.time()
     N = 10
-    imgae_dir = './data/Real'
+    imgae_dir = './data/Real/'
     output_dir = './output/Real/'
     for i in range(N):
         print("loading image %d/10" % i)

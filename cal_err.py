@@ -3,9 +3,9 @@ import os
 import cv2
 from util import readPFM, cal_avgerr
 
-test = 0 # 0: Synthetic 1:Real
-print('Compute error')
-if test == 0:
+
+def main():
+    print('Compute error')
     N = 10
     imgae_dir = './data/Synthetic'
     output_dir = './output/Synthetic'
@@ -20,3 +20,6 @@ if test == 0:
         err_list.append(err)
       
     print('Average error on synthetic data: %.2f' % (sum(err_list)/len(err_list) ))
+
+if __name__ == "__main__":
+    main()
