@@ -12,5 +12,5 @@
 
 ### Evaluation
     python3 cal_err.py 
-Calculate average error on synthetic scene
+Calculate average error on synthetic scene.
 
