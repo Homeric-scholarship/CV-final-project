@@ -8,11 +8,12 @@ print('Compute error')
 if test == 0:
     N = 10
     imgae_dir = './data/Synthetic'
+    output_dir = './output/Synthetic'
     err_list = []
     for i in range(N):
         print("loading image %d/10" % i)
         gt = readPFM(os.path.join(imgae_dir, "TLD%d.pfm" % (i) ))#os.path.join(imgae_dir, "%04d_0.png" % (i) )
-        disp = readPFM(os.path.join(imgae_dir, "SD%d.pfm" % (i) ))
+        disp = readPFM(os.path.join(output_dir, "SD%d.pfm" % (i) ))
 
         err = cal_avgerr(gt, disp)#GT,disp
         print('avgerr: %f ' % err)

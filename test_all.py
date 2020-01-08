@@ -10,11 +10,12 @@ if test == 0:
     tic = time.time()
     N = 10
     imgae_dir = './data/Synthetic'
+    output_dir = './output/Synthetic/'
     for i in range(N):
         print("loading image %d/10" % i)
         Lpath = os.path.join(imgae_dir, "TL%d.png" % (i) )#os.path.join(imgae_dir, "%04d_0.png" % (i) )
         Rpath = os.path.join(imgae_dir, "TR%d.png" % (i) ) 
-        outputpath = os.path.join(imgae_dir, "SD%d.pfm" % (i) ) 
+        outputpath = os.path.join(output_dir, "SD%d.pfm" % (i) ) 
 
         cmd = 'python3 main.py --input-left '+ Lpath +' --input-right '+ Rpath +' --output '+ outputpath
         os.system(cmd)
@@ -25,11 +26,12 @@ elif test == 1:
     tic = time.time()
     N = 10
     imgae_dir = './data/Real'
+    output_dir = './output/Real/'
     for i in range(N):
         print("loading image %d/10" % i)
         Lpath = os.path.join(imgae_dir, "TL%d.bmp" % (i) )#os.path.join(imgae_dir, "%04d_0.png" % (i) )
         Rpath = os.path.join(imgae_dir, "TR%d.bmp" % (i) ) 
-        outputpath = os.path.join(imgae_dir, "RD%d.pfm" % (i) ) 
+        outputpath = os.path.join(output_dir, "RD%d.pfm" % (i) ) 
 
         cmd = 'python3 main.py --input-left '+ Lpath +' --input-right '+ Rpath +' --output '+ outputpath
         os.system(cmd)
