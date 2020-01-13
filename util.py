@@ -60,4 +60,4 @@ def writePFM(file, image, scale=1):
         image.tofile(f)
     
 def cal_avgerr(GT, disp):
-    return np.sum(np.multiply(np.abs(GT[GT != np.inf] - disp[GT != np.inf]), GT[GT != np.inf])) / np.sum(GT[GT != np.inf])
+    return np.mean(np.abs(GT - disp)[GT != np.inf])
