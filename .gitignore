@@ -1,7 +1,12 @@
+# Visual Studio Code
 .vscode
+
 core
 testdata
 test.py
+
+# Cache
+__pycache__/
 
 # Bonen0209
 CVFinal/
