@@ -6,6 +6,9 @@
  - `<Rpath>` (e.g. `.data/Synthetic/TR0.png`)
  - `<Outputpath>` (e.g. `.output/Synthetic/SD0.pfm`)
 
+### Visualize
+    python3 run_visualize.py
+
 ### Test
     python3 test.py <Scene> 
  - `<Scene>` (e.g. `Synthetic`)

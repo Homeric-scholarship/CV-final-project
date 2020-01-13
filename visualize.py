@@ -15,7 +15,7 @@ def main():
     # Jet color mapping
     disp_normalized = (disp_normalized * 255.0).astype(np.uint8)
     disp_normalized = cv2.applyColorMap(disp_normalized, cv2.COLORMAP_JET)
-    cv2.imwrite("./disparity.png", disp_normalized)
+    cv2.imwrite(str(sys.argv[2]), disp_normalized)
     # cv2.imshow("visualized disparity", disp_normalized)
     # cv2.waitKey(0)
 
