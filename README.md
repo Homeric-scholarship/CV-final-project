@@ -10,7 +10,7 @@
     python3 run_visualize.py
 
 ### Test
-    python3 test.py <Scene> 
+    python3 run_main.py <Scene> 
  - `<Scene>` (e.g. `Synthetic`)
 
 ### Evaluation
