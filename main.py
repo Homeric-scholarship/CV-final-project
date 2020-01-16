@@ -116,7 +116,7 @@ def computeDisp(Il, Ir, max_disp=64):
     imgR = cv2.equalizeHist(imgR).astype(np.float32)
 
     # padding with size 32
-    block_size = 5
+    block_size = 17
     half_size = int((block_size-1)/2)#2
     padding_size = half_size*16
 
@@ -164,7 +164,7 @@ def computeDisp(Il, Ir, max_disp=64):
 
     # Disparity refinement
     ##weighted median filter
-    refined_disparity_map = cv2.ximgproc.weightedMedianFilter(cv2.cvtColor(Il, cv2.COLOR_BGR2GRAY), FL.astype(np.uint8), 21)
+    refined_disparity_map = cv2.ximgproc.weightedMedianFilter(cv2.cvtColor(Il, cv2.COLOR_BGR2GRAY), FL.astype(np.uint8), 31)
 
     return refined_disparity_map.astype(np.float32)#.astype(np.uint8)
 
