@@ -2,7 +2,6 @@ import numpy as np
 import argparse
 import cv2
 import time
-from scipy import signal
 from util import writePFM
 
 DEBUG = False
@@ -25,22 +24,105 @@ parser.add_argument(
 )
 
 # You can modify the function interface as you like
+def max_disp(left_img, right_img):
+    """
+    get the max disparity
+    """
+
+    # Max initial matches
+    MAX_INI_MATCH = np.inf
+
+    # ORB detector and brute-force matcher
+    detector = cv2.ORB_create(nfeatures=100000, edgeThreshold=5)
+    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+    # Find the keypoints and descriptors of both images
+    keypoint_left, descriptor_left = detector.detectAndCompute(
+        image=left_img, mask=None
+    )
+    keypoint_right, descriptor_right = detector.detectAndCompute(
+        image=right_img, mask=None
+    )
+
+    # Find the best matches
+    matches = matcher.match(
+        queryDescriptors=descriptor_left, trainDescriptors=descriptor_right
+    )
+    matches = sorted(matches, key=lambda x: x.distance)
+
+    if DEBUG:
+        print(f"Initial matches#")
+        print(f"match_lr: {len(matches)}")
+
+    # Match refinement with RANSAC
+    left_pts = np.float32([keypoint_left[m.queryIdx].pt for m in matches]).reshape(
+        -1, 1, 2
+    )
+    right_pts = np.float32([keypoint_right[m.trainIdx].pt for m in matches]).reshape(
+        -1, 1, 2
+    )
+    homography, mask = cv2.findHomography(left_pts, right_pts, cv2.RANSAC, 5.0)
+    matchesMask = mask.ravel().tolist()
+
+    ransac_matches = []
+    for (m, keep) in zip(matches, matchesMask):
+        if keep:
+            ransac_matches.append(m)
+
+    if DEBUG:
+        print(f"After RANSAC:")
+        print(f"match: {len(ransac_matches)}")
+        ransac_img = cv2.drawMatches(
+            left_img,
+            keypoint_left,
+            right_img,
+            keypoint_right,
+            ransac_matches,
+            None,
+            flags=2,
+        )
+        cv2.imwrite("./debug/RANSAC.png", ransac_img)
+
+    # Get the range of disparity
+    disp_min = np.inf
+    disp_max = 0
+
+    for m in ransac_matches:
+        # Keypoints coordinates
+        pt_left = np.float32(keypoint_left[m.queryIdx].pt)
+        pt_right = np.float32(keypoint_right[m.trainIdx].pt)
+
+        # Compute the distance
+        dist = int(abs(pt_left - pt_right)[0])
+
+        if disp_max < dist:
+            disp_max = dist
+
+    # Ceiling the number
+    disp_max += 1
+
+    return disp_max
+# You can modify the function interface as you like
 def computeDisp(Il, Ir, max_disp=64):
     h, w, ch = Il.shape
     labels = np.zeros((h, w), dtype=np.float32)
-    Il = Il.astype(np.float32)
-    Ir = Ir.astype(np.float32)
+
+    # BGR2GRAY
+    imgL = cv2.cvtColor(Il, cv2.COLOR_BGR2GRAY)#.astype(np.float32)
+    imgR = cv2.cvtColor(Ir, cv2.COLOR_BGR2GRAY)#.astype(np.float32)
+
+    # histogram equalization
+    imgL = cv2.equalizeHist(imgL).astype(np.float32)
+    imgR = cv2.equalizeHist(imgR).astype(np.float32)
 
     # padding with size 32
     block_size = 5
     half_size = int((block_size-1)/2)#2
     padding_size = half_size*16
-    Il_padding = cv2.copyMakeBorder( Il,padding_size,padding_size,padding_size,padding_size,cv2.BORDER_REFLECT)
-    Ir_padding = cv2.copyMakeBorder( Ir,padding_size,padding_size,padding_size,padding_size,cv2.BORDER_REFLECT)#BORDER_REPLICATE
 
-    # BGR2GRAY
-    imgL = cv2.cvtColor(Il_padding, cv2.COLOR_BGR2GRAY)
-    imgR = cv2.cvtColor(Ir_padding, cv2.COLOR_BGR2GRAY)
+    imgL = cv2.copyMakeBorder( imgL,padding_size,padding_size,padding_size,padding_size,cv2.BORDER_REFLECT)
+    imgR = cv2.copyMakeBorder( imgR,padding_size,padding_size,padding_size,padding_size,cv2.BORDER_REFLECT)#BORDER_REPLICATE
+
 
     imgh,imgw = imgL.shape[:2]
     disL = np.zeros((imgh, imgw), dtype=np.float32)
@@ -51,7 +133,7 @@ def computeDisp(Il, Ir, max_disp=64):
         for j in range(half_size,imgw-half_size):
             tpl=imgL[i-half_size:i+half_size+1,j-half_size:j+half_size+1]
             left_bound = j-num_disp
-            right_bound = j+half_size
+            right_bound = j+half_size+4# negative disparity map
             if left_bound < 0:
                 left_bound = 0
             if right_bound >= imgw:
@@ -67,10 +149,9 @@ def computeDisp(Il, Ir, max_disp=64):
                 disL[i,j] =  j-(max_loc[0]+half_size)
                 distmp[i,max_loc[0]+half_size] =1
 
-    disL = disL[padding_size:-padding_size,padding_size:-padding_size]
-    disL = disL.astype(np.uint8)#.astype(np.int)
+    disL = disL[padding_size:-padding_size,padding_size:-padding_size].astype(np.uint8)
+    disL = np.where(disL < max_disp+16, disL, 0.1) # adjust negative value to 0.1
 
-    # Disparity refinement
     # hole filling
     FL = disL.copy()
     for i in range(disL.shape[0]):
@@ -80,11 +161,12 @@ def computeDisp(Il, Ir, max_disp=64):
                 maybe_valid = FL[i,j]
             else:
                 FL[i,j] = maybe_valid
-    # median filter
-    labels = signal.medfilt2d(FL,15)
 
+    # Disparity refinement
+    ##weighted median filter
+    refined_disparity_map = cv2.ximgproc.weightedMedianFilter(cv2.cvtColor(Il, cv2.COLOR_BGR2GRAY), FL.astype(np.uint8), 21)
 
-    return labels.astype(np.float32)#.astype(np.uint8)
+    return refined_disparity_map.astype(np.float32)#.astype(np.uint8)
 
 
 def main():
@@ -96,7 +178,8 @@ def main():
     img_left = cv2.imread(args.input_left)
     img_right = cv2.imread(args.input_right)
     tic = time.time()
-    disp = computeDisp(img_left, img_right)
+    max_d = max_disp(img_left, img_right)
+    disp = computeDisp(img_left, img_right, max_disp=max_d+16)
     toc = time.time()
     writePFM(args.output, disp)
     print("Elapsed time: %f sec." % (toc - tic))
